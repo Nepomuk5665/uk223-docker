@@ -3,6 +3,7 @@ package com.example.demo.core.security;
 import com.example.demo.core.security.helpers.JwtProperties;
 import com.example.demo.domain.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,6 +31,12 @@ public class WebSecurityConfig {
   private final PasswordEncoder passwordEncoder;
   private final JwtProperties jwtProperties;
 
+  @Value("${cors.allowed-origins}")
+  private String allowedOrigins;
+
+  @Value("${cors.allowed-credentials:true}")
+  private boolean allowedCredentials;
+
   @Autowired
   public WebSecurityConfig(UserService userService, PasswordEncoder passwordEncoder, JwtProperties jwtProperties) {
     this.userService = userService;
@@ -56,9 +63,12 @@ public class WebSecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("*"));
+    // Parse comma-separated origins from properties
+    List<String> origins = List.of(allowedOrigins.split(","));
+    configuration.setAllowedOrigins(origins);
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
     configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
+    configuration.setAllowCredentials(allowedCredentials);
     configuration.setExposedHeaders(List.of("Authorization"));
     UrlBasedCorsConfigurationSource configurationSource = new UrlBasedCorsConfigurationSource();
     configurationSource.registerCorsConfiguration("/**", configuration);
