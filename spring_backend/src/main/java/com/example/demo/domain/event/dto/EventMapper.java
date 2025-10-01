@@ -27,7 +27,7 @@ public interface EventMapper extends AbstractMapper<Event, EventDTO> {
 
   default Set<User> mapParticipantIds(Set<UUID> participantIds) {
     if (participantIds == null) {
-      return null;
+      return Set.of();
     }
     return participantIds.stream()
         .map(id -> {

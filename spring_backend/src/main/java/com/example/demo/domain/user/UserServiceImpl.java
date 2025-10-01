@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -78,6 +79,15 @@ public class UserServiceImpl extends AbstractServiceImpl<User> implements UserSe
     });
 
     super.deleteById(id);
+  }
+
+  @Override
+  public List<User> findAllActiveUsers() {
+    // This method returns only active users for event participant selection
+    // Could be enhanced to filter by active status if such field exists
+    return findAll().stream()
+        .filter(user -> user.getRoles() != null && !user.getRoles().isEmpty())
+        .toList();
   }
 
 }

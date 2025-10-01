@@ -53,8 +53,8 @@ public class UserController {
   @PreAuthorize("hasAuthority('USER_VIEW')")
   public ResponseEntity<List<UserDTO>> retrieveAllForEvents() {
     // Users with USER_VIEW authority can see the user list
-    // Used for adding participants to events
-    List<User> users = userService.findAll();
+    // Used for adding participants to events - returns only active users
+    List<User> users = userService.findAllActiveUsers();
     return new ResponseEntity<>(userMapper.toDTOs(users), HttpStatus.OK);
   }
 
