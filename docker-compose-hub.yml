@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres_db
+    container_name: nepomuk-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -17,7 +17,7 @@ services:
 
   backend:
     image: nepocute/uk223-backend:latest
-    container_name: spring-backend
+    container_name: nepomuk-backend
     depends_on:
       - postgres
     environment:
@@ -33,7 +33,7 @@ services:
 
   frontend:
     image: nepocute/uk223-frontend:latest
-    container_name: react-frontend
+    container_name: nepomuk-frontend
     depends_on:
       - backend
     ports:

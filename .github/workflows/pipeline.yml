@@ -159,7 +159,7 @@ jobs:
           services:
             postgres:
               image: postgres:latest
-              container_name: postgres_db
+              container_name: nepomuk-postgres
               environment:
                 POSTGRES_USER: postgres
                 POSTGRES_PASSWORD: postgres
@@ -170,7 +170,7 @@ jobs:
                 - app-network
             backend:
               image: ${{ secrets.DOCKER_USERNAME }}/uk223-backend:latest
-              container_name: spring-backend
+              container_name: nepomuk-backend
               depends_on:
                 - postgres
               environment:
@@ -185,7 +185,7 @@ jobs:
                 - app-network
             frontend:
               image: ${{ secrets.DOCKER_USERNAME }}/uk223-frontend:latest
-              container_name: react-frontend
+              container_name: nepomuk-frontend
               depends_on:
                 - backend
               ports:
@@ -200,8 +200,8 @@ jobs:
           EOF
           docker pull ${{ secrets.DOCKER_USERNAME }}/uk223-backend:latest
           docker pull ${{ secrets.DOCKER_USERNAME }}/uk223-frontend:latest
-          docker stop postgres_db spring-backend react-frontend 2>/dev/null || true
-          docker rm postgres_db spring-backend react-frontend 2>/dev/null || true
+          docker stop nepomuk-postgres nepomuk-backend nepomuk-frontend 2>/dev/null || true
+          docker rm nepomuk-postgres nepomuk-backend nepomuk-frontend 2>/dev/null || true
           docker compose -f dc.yml up -d
           docker ps
 
