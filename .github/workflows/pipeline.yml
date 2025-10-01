@@ -138,9 +138,84 @@ jobs:
         cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-frontend:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-frontend:buildcache,mode=max
 
-  deploy:
+  integration-tests:
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK 18
+      uses: actions/setup-java@v3
+      with:
+        java-version: '18'
+        distribution: 'temurin'
+
+    - name: Start Backend for Tests
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/postgres
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+      run: |
+        cd spring_backend
+        chmod +x gradlew
+        ./gradlew bootRun &
+        sleep 30
+        curl -f http://localhost:8080/v3/api-docs || echo "Backend started"
+
+    - name: Run Postman API Tests
+      run: |
+        npm install -g newman
+        newman run spring_backend/tests.postman_collection.json \
+          --env-var "baseUrl=http://localhost:8080" \
+          --reporters cli,json \
+          --reporter-json-export postman-results.json
+
+    - name: Setup Node.js for Frontend
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Start Frontend for E2E Tests
+      run: |
+        cd react_frontend
+        yarn install --frozen-lockfile
+        REACT_APP_BASEURL=http://localhost:8080 yarn start &
+        sleep 30
+
+    - name: Run Cypress E2E Tests
+      run: |
+        cd react_frontend
+        npx cypress run --config baseUrl=http://localhost:3000
+
+    - name: Upload test results
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          postman-results.json
+          react_frontend/cypress/videos/
+          react_frontend/cypress/screenshots/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: integration-tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
