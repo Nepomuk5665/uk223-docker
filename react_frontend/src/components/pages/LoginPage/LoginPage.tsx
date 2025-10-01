@@ -22,7 +22,7 @@ const Login = () => {
     width: 280,
     margin: '20px auto',
   };
-  const btnstyle = { margin: '8px 0' };
+  const btnstyle = { margin: '8px 0', backgroundColor: '#4CAF50' };
   const navigate = useNavigate();
   const { login } = useContext(ActiveUserContext);
 
