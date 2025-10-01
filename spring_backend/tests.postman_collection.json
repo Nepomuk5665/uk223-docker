@@ -1,0 +1,910 @@
+{
+  "info": {
+    "name": "Tests for 5 Use Cases",
+    "description": "Complete test collection for all 5 Use Cases",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "Bearer {{token}}",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "Authorization",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has Authorization header\", function () {",
+                  "    pm.response.to.have.header(\"Authorization\");",
+                  "});",
+                  "",
+                  "// Extract and save admin token",
+                  "const authHeader = pm.response.headers.get(\"Authorization\");",
+                  "if (authHeader) {",
+                  "    const token = authHeader.replace(\"Bearer \", \"\");",
+                  "    pm.collectionVariables.set(\"adminToken\", token);",
+                  "    pm.collectionVariables.set(\"adminId\", \"ba804cb9-fa14-42a5-afaf-be488742fc54\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login as Normal User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has Authorization header\", function () {",
+                  "    pm.response.to.have.header(\"Authorization\");",
+                  "});",
+                  "",
+                  "// Extract and save user token",
+                  "const authHeader = pm.response.headers.get(\"Authorization\");",
+                  "if (authHeader) {",
+                  "    const token = authHeader.replace(\"Bearer \", \"\");",
+                  "    pm.collectionVariables.set(\"userToken\", token);",
+                  "    pm.collectionVariables.set(\"userId\", \"0d8fa44c-54fd-4cd0-ace9-2a7da57992de\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "UC1 - User Creates Event",
+      "item": [
+        {
+          "name": "Create Event as User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));",
+                  "",
+                  "// Set event date to tomorrow",
+                  "const tomorrow = new Date();",
+                  "tomorrow.setDate(tomorrow.getDate() + 1);",
+                  "tomorrow.setHours(18, 0, 0, 0);",
+                  "const eventDate = tomorrow.toISOString().slice(0, 19);",
+                  "pm.collectionVariables.set(\"eventDate\", eventDate);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct event structure\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('name');",
+                  "    pm.expect(responseJson).to.have.property('location');",
+                  "    pm.expect(responseJson).to.have.property('eventDate');",
+                  "    pm.expect(responseJson).to.have.property('creator');",
+                  "});",
+                  "",
+                  "pm.test(\"Event name is correct\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.name).to.eql(\"Test Event\");",
+                  "});",
+                  "",
+                  "pm.test(\"Location is correct\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.location).to.eql(\"Herostrasse 12, 8048 Zürich\");",
+                  "});",
+                  "",
+                  "pm.test(\"Creator is the logged-in user\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.creator.id).to.eql(pm.collectionVariables.get(\"userId\"));",
+                  "});",
+                  "",
+                  "// Save event ID for later tests",
+                  "const responseJson = pm.response.json();",
+                  "pm.collectionVariables.set(\"eventId\", responseJson.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Event\",\n    \"location\": \"Herostrasse 12, 8048 Zürich\",\n    \"eventDate\": \"{{eventDate}}\",\n    \"description\": \"Test event created by normal user\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "Create Event Without Authority (Should Fail)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Use no token to simulate user without EVENT_CREATE",
+                  "pm.collectionVariables.set(\"token\", \"\");",
+                  "",
+                  "// Set event date to tomorrow",
+                  "const tomorrow = new Date();",
+                  "tomorrow.setDate(tomorrow.getDate() + 1);",
+                  "tomorrow.setHours(10, 0, 0, 0);",
+                  "const eventDate = tomorrow.toISOString().slice(0, 19);",
+                  "pm.collectionVariables.set(\"eventDate\", eventDate);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 or 403\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Unauthorized Event\",\n    \"location\": \"Test Location\",\n    \"eventDate\": \"{{eventDate}}\",\n    \"description\": \"This should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "UC2 - Edit Event & Add Participants",
+      "item": [
+        {
+          "name": "Register Test Participant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "// Save the participant ID for later use",
+                  "const responseJson = pm.response.json();",
+                  "pm.collectionVariables.set(\"participantId\", responseJson.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Test\",\n    \"lastName\": \"Participant\",\n    \"email\": \"participant@test.com\",\n    \"password\": \"TestPass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          }
+        },
+        {
+          "name": "Admin Edits Event",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"adminToken\"));",
+                  "",
+                  "// Set event date to tomorrow",
+                  "const tomorrow = new Date();",
+                  "tomorrow.setDate(tomorrow.getDate() + 1);",
+                  "tomorrow.setHours(19, 0, 0, 0);",
+                  "const eventDate = tomorrow.toISOString().slice(0, 19);",
+                  "pm.collectionVariables.set(\"eventDate\", eventDate);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Event name was updated\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.name).to.eql(\"Updated Test Event\");",
+                  "});",
+                  "",
+                  "pm.test(\"Description was updated\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.description).to.include(\"Admin\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Test Event\",\n    \"location\": \"Herostrasse 12, 8048 Zürich\",\n    \"eventDate\": \"{{eventDate}}\",\n    \"description\": \"Event updated by Admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}"]
+            }
+          }
+        },
+        {
+          "name": "Creator Edits Own Event",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));",
+                  "",
+                  "// Set event date to tomorrow",
+                  "const tomorrow = new Date();",
+                  "tomorrow.setDate(tomorrow.getDate() + 1);",
+                  "tomorrow.setHours(20, 0, 0, 0);",
+                  "const eventDate = tomorrow.toISOString().slice(0, 19);",
+                  "pm.collectionVariables.set(\"eventDate\", eventDate);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 403\", function () {",
+                  "    // Depending on implementation, creator might be able to edit",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Creator Updated Event\",\n    \"location\": \"Herostrasse 12, 8048 Zürich\",\n    \"eventDate\": \"{{eventDate}}\",\n    \"description\": \"Event updated by creator\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}"]
+            }
+          }
+        },
+        {
+          "name": "Add Participant to Event",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Use userToken since the user is the creator of the event",
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Participant was added\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.participants).to.be.an('array');",
+                  "    const participantIds = responseJson.participants.map(p => p.id);",
+                  "    pm.expect(participantIds).to.include(pm.collectionVariables.get(\"participantId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/participants/{{participantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "participants", "{{participantId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "UC3 - View Event Information",
+      "item": [
+        {
+          "name": "Get All Events",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Events have required fields\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.length > 0) {",
+                  "        const event = responseJson[0];",
+                  "        pm.expect(event).to.have.property('id');",
+                  "        pm.expect(event).to.have.property('name');",
+                  "        pm.expect(event).to.have.property('location');",
+                  "        pm.expect(event).to.have.property('eventDate');",
+                  "        pm.expect(event).to.have.property('creator');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains full event details\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('name');",
+                  "    pm.expect(responseJson).to.have.property('location');",
+                  "    pm.expect(responseJson).to.have.property('eventDate');",
+                  "    pm.expect(responseJson).to.have.property('description');",
+                  "    pm.expect(responseJson).to.have.property('creator');",
+                  "    pm.expect(responseJson).to.have.property('participants');",
+                  "});",
+                  "",
+                  "pm.test(\"Event ID matches requested ID\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.id).to.eql(pm.collectionVariables.get(\"eventId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "UC4 - List Participants with Pagination",
+      "item": [
+        {
+          "name": "Get Participants - First Page",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has pagination structure\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('content');",
+                  "    pm.expect(responseJson).to.have.property('totalElements');",
+                  "    pm.expect(responseJson).to.have.property('totalPages');",
+                  "    pm.expect(responseJson).to.have.property('size');",
+                  "    pm.expect(responseJson).to.have.property('number');",
+                  "});",
+                  "",
+                  "pm.test(\"Page size is correct\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.size).to.eql(10);",
+                  "});",
+                  "",
+                  "pm.test(\"Current page is 0\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.number).to.eql(0);",
+                  "});",
+                  "",
+                  "pm.test(\"Content contains user objects\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.content.length > 0) {",
+                  "        const participant = responseJson.content[0];",
+                  "        pm.expect(participant).to.have.property('id');",
+                  "        pm.expect(participant).to.have.property('firstName');",
+                  "        pm.expect(participant).to.have.property('lastName');",
+                  "        pm.expect(participant).to.have.property('email');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/participants?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "participants"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Participants - Custom Page Size",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Page size is 5\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.size).to.eql(5);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/participants?page=0&size=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "participants"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "UC5 - Admin Cannot Join as Participant",
+      "item": [
+        {
+          "name": "Add Admin as Participant (Should Fail)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"adminToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates admin cannot join\", function () {",
+                  "    const responseText = pm.response.text();",
+                  "    pm.expect(responseText.toLowerCase()).to.include('admin');",
+                  "    pm.expect(responseText.toLowerCase()).to.include('cannot');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/participants/{{adminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "participants", "{{adminId}}"]
+            }
+          }
+        },
+        {
+          "name": "Verify Admin Not in Participants",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"userToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Admin is not in participants list\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    const adminId = pm.collectionVariables.get(\"adminId\");",
+                  "    ",
+                  "    if (responseJson.content && responseJson.content.length > 0) {",
+                  "        const participantIds = responseJson.content.map(p => p.id);",
+                  "        pm.expect(participantIds).to.not.include(adminId);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/participants",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "participants"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Delete Test Participant",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"adminToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content or 404\", function () {",
+                  "    // 404 is OK if user was already deleted",
+                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/{{participantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "{{participantId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Test Event",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"token\", pm.collectionVariables.get(\"adminToken\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
