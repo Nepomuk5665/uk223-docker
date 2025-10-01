@@ -177,7 +177,10 @@ jobs:
         cd spring_backend
         chmod +x gradlew
         ./gradlew build -x test
-        nohup java -jar build/libs/*.jar > backend.log 2>&1 &
+        # Find the correct JAR (not the -plain.jar)
+        JAR_FILE=$(ls build/libs/*.jar | grep -v plain | head -n 1)
+        echo "Starting JAR: $JAR_FILE"
+        nohup java -jar "$JAR_FILE" > backend.log 2>&1 &
         echo "Waiting for backend to start..."
         for i in {1..90}; do
           if curl -f http://localhost:8080/v3/api-docs 2>/dev/null; then
