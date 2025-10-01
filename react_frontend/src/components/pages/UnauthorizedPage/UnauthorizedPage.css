@@ -1,0 +1,242 @@
+.unauthorized-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Guard Face */
+.guard-container {
+  animation: bounce 2s infinite;
+  margin-bottom: 20px;
+}
+
+.guard-face {
+  width: 150px;
+  height: 150px;
+  background: #ffd93d;
+  border-radius: 50%;
+  position: relative;
+  border: 4px solid #333;
+}
+
+.guard-eyes {
+  position: absolute;
+  top: 40px;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 30px;
+}
+
+.eye {
+  width: 30px;
+  height: 30px;
+  background: white;
+  border-radius: 50%;
+  position: relative;
+  border: 2px solid #333;
+}
+
+.pupil {
+  width: 15px;
+  height: 15px;
+  background: #333;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.guard-mouth {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 20px;
+  border-bottom: 4px solid #333;
+  border-radius: 0 0 60px 60px;
+}
+
+.guard-arms {
+  display: flex;
+  justify-content: space-between;
+  width: 200px;
+  margin-top: -20px;
+}
+
+.arm {
+  font-size: 40px;
+  animation: wave 1s infinite alternate;
+}
+
+.left-arm {
+  animation-delay: 0.5s;
+}
+
+/* Error Code */
+.error-code {
+  font-size: 120px;
+  font-weight: bold;
+  margin: 0;
+  animation: rainbow 3s linear infinite;
+}
+
+.error-title {
+  font-size: 24px;
+  color: white;
+  margin: 10px 0;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Message Box */
+.message-box {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.typing-text {
+  color: white;
+  font-size: 18px;
+  margin: 10px 0;
+}
+
+.small-text {
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Buttons */
+.button-container {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.fun-btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: bold;
+}
+
+.back-btn {
+  background: #ff6b6b;
+  color: white;
+}
+
+.back-btn:hover {
+  background: #ff5252;
+  transform: translateX(-10px);
+}
+
+.home-btn {
+  background: #4ecdc4;
+  color: white;
+}
+
+.home-btn:hover {
+  background: #45b7aa;
+  transform: scale(1.1);
+}
+
+.retry-btn {
+  background: #feca57;
+  color: #333;
+}
+
+.retry-btn:hover {
+  background: #ff9ff3;
+  animation: shake 0.5s;
+}
+
+/* Floating Emojis */
+.floating-emojis {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.emoji {
+  position: absolute;
+  font-size: 30px;
+  animation: float 6s infinite ease-in-out;
+  opacity: 0.3;
+}
+
+.emoji-1 {
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.emoji-2 {
+  top: 20%;
+  right: 10%;
+  animation-delay: 1.5s;
+}
+
+.emoji-3 {
+  bottom: 20%;
+  left: 15%;
+  animation-delay: 3s;
+}
+
+.emoji-4 {
+  bottom: 10%;
+  right: 15%;
+  animation-delay: 4.5s;
+}
+
+/* Animations */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes wave {
+  0% { transform: rotate(-20deg); }
+  100% { transform: rotate(20deg); }
+}
+
+@keyframes rainbow {
+  0% { color: #ff6b6b; }
+  16% { color: #feca57; }
+  33% { color: #48dbfb; }
+  50% { color: #ff9ff3; }
+  66% { color: #54a0ff; }
+  83% { color: #5f27cd; }
+  100% { color: #ff6b6b; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-30px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(30px) rotate(240deg);
+  }
+}
