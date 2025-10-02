@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   test-backend:
@@ -77,7 +77,9 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend, sonarqube]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')) ||
+      (github.event_name == 'pull_request' && github.base_ref == 'develop')
 
     steps:
     - uses: actions/checkout@v3
@@ -89,12 +91,14 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Login to Docker Hub
+      if: github.event_name == 'push'
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push backend
+    - name: Build and push backend (main)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: docker/build-push-action@v5
       with:
         context: ./spring_backend
@@ -106,10 +110,34 @@ jobs:
         cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-backend:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-backend:buildcache,mode=max
 
+    - name: Build and push backend (develop)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./spring_backend
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/uk223-backend:develop
+          ${{ secrets.DOCKER_USERNAME }}/uk223-backend:develop-${{ github.sha }}
+        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-backend:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-backend:buildcache,mode=max
+
+    - name: Build backend (PR validation)
+      if: github.event_name == 'pull_request' && github.base_ref == 'develop'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./spring_backend
+        platforms: linux/amd64,linux/arm64
+        push: false
+        tags: ${{ secrets.DOCKER_USERNAME }}/uk223-backend:pr-${{ github.event.pull_request.number }}
+
   build-frontend:
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend, sonarqube]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')) ||
+      (github.event_name == 'pull_request' && github.base_ref == 'develop')
 
     steps:
     - uses: actions/checkout@v3
@@ -121,12 +149,14 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Login to Docker Hub
+      if: github.event_name == 'push'
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push frontend
+    - name: Build and push frontend (main)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: docker/build-push-action@v5
       with:
         context: ./react_frontend
@@ -138,10 +168,32 @@ jobs:
         cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-frontend:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-frontend:buildcache,mode=max
 
+    - name: Build and push frontend (develop)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./react_frontend
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/uk223-frontend:develop
+          ${{ secrets.DOCKER_USERNAME }}/uk223-frontend:develop-${{ github.sha }}
+        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-frontend:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/uk223-frontend:buildcache,mode=max
+
+    - name: Build frontend (PR validation)
+      if: github.event_name == 'pull_request' && github.base_ref == 'develop'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./react_frontend
+        platforms: linux/amd64,linux/arm64
+        push: false
+        tags: ${{ secrets.DOCKER_USERNAME }}/uk223-frontend:pr-${{ github.event.pull_request.number }}
+
   integration-tests:
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     services:
       postgres:
         image: postgres:latest
@@ -241,6 +293,173 @@ jobs:
           postman-results.json
           react_frontend/cypress/videos/
           react_frontend/cypress/screenshots/
+
+  deploy-test:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Deploy to test server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.TEST_SERVER_HOST }}
+        username: root
+        password: ${{ secrets.TEST_SERVER_PASSWORD }}
+        script: |
+          # Create deployment directory
+          mkdir -p ~/uk223-test-deployment && cd ~/uk223-test-deployment
+
+          # Create docker-compose file for test environment
+          cat > dc.yml << 'EOF'
+          services:
+            postgres:
+              image: postgres:latest
+              container_name: nepomuk-test-postgres
+              environment:
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: postgres
+                POSTGRES_DB: postgres
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+              networks:
+                - app-network
+            backend:
+              image: ${{ secrets.DOCKER_USERNAME }}/uk223-backend:develop
+              container_name: nepomuk-test-backend
+              depends_on:
+                - postgres
+              environment:
+                SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+                SPRING_DATASOURCE_USERNAME: postgres
+                SPRING_DATASOURCE_PASSWORD: postgres
+                SPRING_JPA_HIBERNATE_DDL_AUTO: update
+                SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+              ports:
+                - "8929:8080"
+              networks:
+                - app-network
+            frontend:
+              image: ${{ secrets.DOCKER_USERNAME }}/uk223-frontend:develop
+              container_name: nepomuk-test-frontend
+              depends_on:
+                - backend
+              ports:
+                - "8928:80"
+              networks:
+                - app-network
+            nginx:
+              image: nginx:alpine
+              container_name: nepomuk-test-nginx
+              depends_on:
+                - frontend
+                - backend
+              ports:
+                - "80:80"
+                - "443:443"
+              volumes:
+                - ./nginx.conf:/etc/nginx/nginx.conf:ro
+                - ./ssl:/etc/nginx/ssl:ro
+              networks:
+                - app-network
+          networks:
+            app-network:
+              driver: bridge
+          volumes:
+            postgres_data:
+          EOF
+
+          # Create nginx configuration
+          cat > nginx.conf << 'NGINXEOF'
+          events {
+            worker_connections 1024;
+          }
+
+          http {
+            upstream frontend {
+              server nepomuk-test-frontend:80;
+            }
+
+            upstream backend {
+              server nepomuk-test-backend:8080;
+            }
+
+            # HTTP server
+            server {
+              listen 80;
+              server_name _;
+
+              location / {
+                proxy_pass http://frontend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+              }
+
+              location /api/ {
+                proxy_pass http://backend/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+              }
+            }
+
+            # HTTPS server (self-signed cert for testing)
+            server {
+              listen 443 ssl;
+              server_name _;
+
+              ssl_certificate /etc/nginx/ssl/cert.pem;
+              ssl_certificate_key /etc/nginx/ssl/key.pem;
+
+              location / {
+                proxy_pass http://frontend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+              }
+
+              location /api/ {
+                proxy_pass http://backend/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+              }
+            }
+          }
+          NGINXEOF
+
+          # Create self-signed SSL certificate if it doesn't exist
+          mkdir -p ssl
+          if [ ! -f ssl/cert.pem ]; then
+            openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 365 -nodes -subj "/CN=test.nepomuk.dev"
+          fi
+
+          # Pull latest develop images
+          docker pull ${{ secrets.DOCKER_USERNAME }}/uk223-backend:develop
+          docker pull ${{ secrets.DOCKER_USERNAME }}/uk223-frontend:develop
+
+          # Stop and remove old containers
+          docker stop nepomuk-test-postgres nepomuk-test-backend nepomuk-test-frontend nepomuk-test-nginx 2>/dev/null || true
+          docker rm nepomuk-test-postgres nepomuk-test-backend nepomuk-test-frontend nepomuk-test-nginx 2>/dev/null || true
+
+          # Start new containers
+          docker compose -f dc.yml up -d
+
+          # Show running containers
+          docker ps
+
+          echo "Test deployment complete!"
+          echo "HTTP access: http://139.162.185.38"
+          echo "HTTPS access: https://139.162.185.38"
+          echo "Direct frontend: http://139.162.185.38:8928"
+          echo "Direct backend: http://139.162.185.38:8929"
 
   deploy:
     runs-on: ubuntu-latest
