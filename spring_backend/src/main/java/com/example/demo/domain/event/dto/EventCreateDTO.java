@@ -20,7 +20,7 @@ public class EventCreateDTO {
 
   @NotBlank(message = "Event name is required")
   @Size(min = 3, max = 100, message = "Event name must be between 3 and 100 characters")
-  private String name
+  private String name;
 
   @NotBlank(message = "Location is required")
   @Size(min = 3, max = 200, message = "Location must be between 3 and 200 characters")
