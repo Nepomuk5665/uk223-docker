@@ -18,7 +18,7 @@ describe('Navigation Tests', () => {
     cy.get('[data-testid="navbar"]').should('exist');
 
     cy.get('[data-testid="navbar-home"]').click();
-    cy.url().should('eq', Cypress.config().baseUrl);
+    cy.url().should('match', /http:\/\/localhost:3000\/?$/);
 
     cy.get('[data-testid="navbar-events"]').click();
     cy.url().should('include', '/events');

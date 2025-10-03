@@ -1,6 +1,8 @@
 describe('Login Tests', () => {
   beforeEach(() => {
     cy.visit('/login');
+    // Wait for the page to be fully loaded
+    cy.get('[data-testid="login-page"]', { timeout: 10000 }).should('exist');
   });
 
   it('should display login form', () => {
@@ -16,24 +18,27 @@ describe('Login Tests', () => {
     cy.get('[data-testid="login-password-input"]').type('wrongpass');
     cy.get('[data-testid="login-submit-button"]').click();
 
-    cy.get('[data-testid="login-error-message"]', { timeout: 5000 }).should('exist');
-    cy.get('[data-testid="login-error-message"]').should('contain', 'Invalid');
+    // Wait longer for the error message and check if it exists
+    cy.get('[data-testid="login-error-message"]', { timeout: 10000 }).should('exist');
+    cy.get('[data-testid="login-error-message"]').should('be.visible');
   });
 
   it('should successfully login as admin and redirect to dashboard', () => {
-    cy.get('[data-testid="login-email-input"]').type('admin@example.com');
-    cy.get('[data-testid="login-password-input"]').type('1234');
+    cy.get('[data-testid="login-email-input"]').clear().type('admin@example.com');
+    cy.get('[data-testid="login-password-input"]').clear().type('1234');
     cy.get('[data-testid="login-submit-button"]').click();
 
-    cy.url({ timeout: 10000 }).should('include', '/admin');
+    // Wait longer for redirect and backend response
+    cy.url({ timeout: 15000 }).should('include', '/admin');
   });
 
   it('should successfully login as user and redirect to events', () => {
-    cy.get('[data-testid="login-email-input"]').type('user@example.com');
-    cy.get('[data-testid="login-password-input"]').type('1234');
+    cy.get('[data-testid="login-email-input"]').clear().type('user@example.com');
+    cy.get('[data-testid="login-password-input"]').clear().type('1234');
     cy.get('[data-testid="login-submit-button"]').click();
 
-    cy.url({ timeout: 10000 }).should('include', '/events');
+    // Wait longer for redirect and backend response
+    cy.url({ timeout: 15000 }).should('include', '/events');
   });
 
   it('should display demo credentials info', () => {

@@ -3,11 +3,12 @@
 // Custom login command
 Cypress.Commands.add('login', (email: string, password: string) => {
   cy.visit('/login');
-  cy.get('[data-testid="login-email-input"]').type(email);
-  cy.get('[data-testid="login-password-input"]').type(password);
+  cy.get('[data-testid="login-page"]', { timeout: 10000 }).should('exist');
+  cy.get('[data-testid="login-email-input"]').clear().type(email);
+  cy.get('[data-testid="login-password-input"]').clear().type(password);
   cy.get('[data-testid="login-submit-button"]').click();
-  // Wait for redirect
-  cy.url().should('not.include', '/login');
+  // Wait longer for redirect and backend authentication
+  cy.url({ timeout: 15000 }).should('not.include', '/login');
 });
 
 // Quick login as admin
