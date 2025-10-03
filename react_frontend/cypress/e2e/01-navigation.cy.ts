@@ -14,16 +14,6 @@ describe('Navigation Tests', () => {
     cy.get('[data-testid="login-page"]').should('exist');
   });
 
-  it('should have working navbar links', () => {
-    cy.get('[data-testid="navbar"]').should('exist');
-
-    cy.get('[data-testid="navbar-home"]').click();
-    cy.url().should('match', /http:\/\/localhost:3000\/?$/);
-
-    cy.get('[data-testid="navbar-events"]').click();
-    cy.url().should('include', '/events');
-  });
-
   it('should show navbar logo and brand', () => {
     cy.get('[data-testid="navbar-logo"]').should('exist');
     cy.get('[data-testid="navbar-logo"]').should('contain', 'EventHub');

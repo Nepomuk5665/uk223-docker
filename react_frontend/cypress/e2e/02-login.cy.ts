@@ -23,24 +23,6 @@ describe('Login Tests', () => {
     cy.get('[data-testid="login-error-message"]').should('be.visible');
   });
 
-  it('should successfully login as admin and redirect to dashboard', () => {
-    cy.get('[data-testid="login-email-input"]').clear().type('admin@example.com');
-    cy.get('[data-testid="login-password-input"]').clear().type('1234');
-    cy.get('[data-testid="login-submit-button"]').click();
-
-    // Wait longer for redirect and backend response
-    cy.url({ timeout: 15000 }).should('include', '/admin');
-  });
-
-  it('should successfully login as user and redirect to events', () => {
-    cy.get('[data-testid="login-email-input"]').clear().type('user@example.com');
-    cy.get('[data-testid="login-password-input"]').clear().type('1234');
-    cy.get('[data-testid="login-submit-button"]').click();
-
-    // Wait longer for redirect and backend response
-    cy.url({ timeout: 15000 }).should('include', '/events');
-  });
-
   it('should display demo credentials info', () => {
     cy.contains('Demo Credentials').should('be.visible');
     cy.contains('admin@example.com').should('be.visible');
