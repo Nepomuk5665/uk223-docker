@@ -1,0 +1,14 @@
+{
+  "sampleEvent": {
+    "name": "Test Event",
+    "location": "Test Location",
+    "eventDate": "2025-12-31T18:00:00",
+    "description": "This is a test event for Cypress testing"
+  },
+  "futureEvent": {
+    "name": "Future Conference",
+    "location": "Convention Center",
+    "eventDate": "2026-06-15T09:00:00",
+    "description": "Annual technology conference"
+  }
+}

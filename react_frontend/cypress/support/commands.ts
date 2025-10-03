@@ -1,45 +1,43 @@
-// / <reference types="cypress" />
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
+/// <reference types="cypress" />
 
-// YOU CAN ADD YOUR CUSTOM CYPRESS FUNCTIONS HERE
+// Custom login command
+Cypress.Commands.add('login', (email: string, password: string) => {
+  cy.visit('/login');
+  cy.get('[data-testid="login-email-input"]').type(email);
+  cy.get('[data-testid="login-password-input"]').type(password);
+  cy.get('[data-testid="login-submit-button"]').click();
+  // Wait for redirect
+  cy.url().should('not.include', '/login');
+});
 
+// Quick login as admin
+Cypress.Commands.add('loginAsAdmin', () => {
+  cy.login('admin@example.com', '1234');
+});
 
-// // -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// // -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// // -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// // -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+// Quick login as user
+Cypress.Commands.add('loginAsUser', () => {
+  cy.login('user@example.com', '1234');
+});
 
+// Logout command
+Cypress.Commands.add('logout', () => {
+  cy.window().then((win) => {
+    win.localStorage.clear();
+    win.sessionStorage.clear();
+  });
+  cy.visit('/');
+});
 
-// IF YOU ADD CUSTOM COMMANDS ABOVE, UNCOMMENT THIS DECLARATION AND ADD tYPE DEFINITION FOR YOUR FUNCTION
-
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      login(email: string, password: string): Chainable<void>
+      loginAsAdmin(): Chainable<void>
+      loginAsUser(): Chainable<void>
+      logout(): Chainable<void>
+    }
+  }
+}
 
 export {};
